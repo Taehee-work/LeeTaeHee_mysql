@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Mapper 인터페이스를 이용하는 또 다른 장점은 기존의 XML 을 그대로 사용할 수 있음. 이때 두가지 규칙이 있음. 1. 
+	Mapper 인터페이스 이름과 XML Mapper 의 네임스페이스를 반드시 일치시킬 것. 2. Mapper 인터페이스의 메서드 이름과 
+	XML 의 id 를 반드시 일치시킴. root-context.xml :: sqlSessionFactory 에 매퍼 xml 파일의 경로를 
+	인식하게 함. -->
+
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="org.edu.dao.IF_MemberDAO">
+
+	<!-- 공통사용 검색쿼리 -->
+	<sql id="sqlWhere">
+		<if test="searchType != null">
+			AND(
+			user_id LIKE CONCAT('%',#{searchKeyword},'%')
+			or
+			user_name LIKE CONCAT('%',#{searchKeyword},'%')
+			or
+			email LIKE CONCAT('%',#{searchKeyword},'%')
+			)
+		</if>	
+	</sql>
+
+	<insert id="insertMember">
+		insert into tbl_member (user_id,user_pw,user_name,
+		email,point,enabled,levels,reg_date)
+		values (#{user_id},#{user_pw},#{user_name},
+		#{email},#{point},#{enabled},#{levels},now())
+	</insert>
+	
+	<select id="selectMember" resultType="org.edu.vo.MemberVO">
+<!-- 'Character Data'.'문자 데이터'를 말하는 것입니다. n이 용어를 
+	좀 더 정확하게 말하면 '(Unparsed) Character Data'.'파싱하지 않는 문자 
+	데이터'라는 뜻입니다. 반대로, 파싱하는 문자 데이터는 'PCDATA'라고 부릅니다. 
+	쿼리를 작성할 때, '<', '>', '&'를 사용해야하는 경우가 생기는데 xml에서 
+	그냥 사용할 경우 태그로 인식하는 경우가 종종있다. 이럴경우 에러를 뱉어내기 때문에 
+	'태그가 아니라 실제 쿼리에 필요한 코드'라고 알려줘야 한다. 
+	그때 사용하는 것이 <!CDATA[...]]> 이다. 한 마디로 XML parser에 의해 
+	해석하지말고 그대로 브라우저에 출력하라는 뜻이다. -->
+		select * from tbl_member
+		where 1=1
+		<include refid="sqlWhere"></include>
+		ORDER BY reg_date DESC
+		LIMIT #{startNo}, #{perPageNum}
+	</select>
+	
+	<select id="countUserId" resultType="int">
+		select count(*) from tbl_member
+		where 1=1
+		<include refid="sqlWhere"></include>
+	</select>
+	
+	
+	<update id="updateMember">
+		update tbl_member set
+		<if test="user_pw !=''">
+		user_pw = #{user_pw},
+		</if>
+		user_name =	#{user_name},
+		email = #{email},
+		point = #{point},
+		enabled = #{enabled},
+		levels = #{levels},
+		update_date = now()
+		where user_id = #{user_id}
+	</update>
+	
+	<delete id="deleteMember">
+		delete from tbl_member where user_id = #{user_id}
+	</delete>
+	
+	<select id="viewMember" resultType="org.edu.vo.MemberVO">
+			select * from tbl_member where user_id = #{user_id}
+	</select>
+</mapper>
